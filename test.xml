@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="CGImap 0.6.0 (22451 thorn-02.openstreetmap.org)" copyright="OpenStreetMap and contributors" attribution="http://www.openstreetmap.org/copyright" license="http://opendatacommons.org/licenses/odbl/1-0/">
+ <node id="319683569" visible="true" version="6" changeset="10470616" timestamp="2012-01-22T22:13:01Z" user="almich" uid="129531" lat="48.2060362" lon="16.3218400">
+  <tag k="addr:city" v="Wien"/>
+  <tag k="addr:country" v="AT"/>
+  <tag k="addr:housenumber" v="72"/>
+  <tag k="addr:postcode" v="1160"/>
+  <tag k="addr:street" v="Gablenzgasse"/>
+  <tag k="amenity" v="fuel"/>
+  <tag k="name" v="BP"/>
+ </node>
+</osm>
