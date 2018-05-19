@@ -104,7 +104,6 @@ public class FileToDB {
                     NamedNodeMap map = nodeList.item(i).getAttributes();
                     String lat = map.getNamedItem("lat").getNodeValue();
                     String lon = map.getNamedItem("lon").getNodeValue();
-
                     
 
                 }
@@ -112,20 +111,6 @@ public class FileToDB {
             } catch (SAXException | ParserConfigurationException | IOException e1) {
                 e1.printStackTrace();
             }
-
-
-/*
-
-                NodeList nodeList = doc.getDocumentElement().getChildNodes();
-
-                for (int i = 0; i < nodeList.getLength(); i++) {
-                    Node node = nodeList.item(i);
-                    NamedNodeMap map = node.getAttributes();
-                    String lat = map.getNamedItem("lat").getNodeValue();
-                    String lon = map.getNamedItem("lon").getNodeValue();
-                    System.out.println("burak");
-                }*/
-
 
         } catch (IOException e) {
             e.printStackTrace();
