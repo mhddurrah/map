@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.openmapvalidator.mybatis.Mapper">
+    <select id="selectPlaces" resultType="com.example.openmapvalidator.mybatis.PlaceDBModel">
+                SELECT * FROM planet_osm_point WHERE public_transport IS NULL AND name IS NOT NULL AND name in ( SELECT
+                name
+                FROM planet_osm_point WHERE AMENITY IS
+        NOT NULL OR shop IS NOT NULL)
+        </select>
+</mapper>
