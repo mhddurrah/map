@@ -226,7 +226,7 @@ public class FileToDB {
                         System.out.println();
 
                         if (!nameResultFromGooglePlace.equals(node.getName())) {
-                            String lngLat = LOG + "," + LAT;
+                            String lngLat = LAT + "," + LOG;
 
                             Map<String, String> mapOfNames = new HashMap<>();
                             mapOfNames.put("openstreet", node.getName());
