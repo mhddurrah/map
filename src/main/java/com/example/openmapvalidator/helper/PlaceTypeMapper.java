@@ -20,6 +20,7 @@ public class PlaceTypeMapper {
         openToGoogle.put("fuel", "gas_station");
         openToGoogle.put("bakery", "bakery");
         openToGoogle.put("parking_entrance", "parking");
+        openToGoogle.put("parking", "parking");
         openToGoogle.put("pharmacy", "pharmacy");
         openToGoogle.put("pub", "cafe");
         openToGoogle.put("restaurant", "restaurant");
@@ -29,6 +30,7 @@ public class PlaceTypeMapper {
         openToGoogle.put("kiosk", "kiosk");
         openToGoogle.put("laundry", "laundry");
         openToGoogle.put("locksmith", "locksmith");
+        openToGoogle.put("nightclub", "night_club");
     }
 
     public Map<String, String> getOpenToGoogle() {

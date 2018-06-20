@@ -3,8 +3,6 @@
 <mapper namespace="com.example.openmapvalidator.mybatis.Mapper">
     <select id="selectPlaces" resultType="com.example.openmapvalidator.mybatis.PlaceDBModel">
                 SELECT * FROM planet_osm_point WHERE public_transport IS NULL AND name IS NOT NULL AND name in ( SELECT
-                name
-                FROM planet_osm_point WHERE AMENITY IS
-        NOT NULL OR shop IS NOT NULL)
-        </select>
+                name FROM planet_osm_point WHERE AMENITY IS NOT NULL OR shop IS NOT NULL)
+    </select>
 </mapper>

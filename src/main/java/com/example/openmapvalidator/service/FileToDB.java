@@ -11,6 +11,7 @@ import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,10 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +50,11 @@ public class FileToDB {
     @Value("${googlemap.retrievewithplaceid}")
     private String GOOGLE_RETRIEVE_WITH_PLACE_ID;
 
-    private void saveToDB(String fileName) {
+    @Autowired
+    private RestTemplate restTemplate;
+
+
+    private void osmFileToDB(String fileName) {
 
         boolean isWindows = System.getProperty("os.name")
                 .toLowerCase().startsWith("windows");
@@ -60,29 +68,20 @@ public class FileToDB {
             // create a file with the working directory we wish
             File dir = new ClassPathResource("map").getFile();
 
-            String command = "osm2pgsql --create --database map-db @FILE_NAME";
-            command = command.replace("@FILE_NAME", fileName);
+           // String command = "osm2pgsql --create --database map-db @FILE_NAME";
+          //  command = command.replace("@FILE_NAME", fileName);
 
-            Process p = Runtime.getRuntime().exec(command, null, dir);
+         //   Process p = Runtime.getRuntime().exec(command, null, dir);
 
-            BufferedReader stdInput = new BufferedReader(new
-                    InputStreamReader(p.getInputStream()));
+            /*SqlSession session = getDBSession();
+            session.delete("deleteOsmPoint");
+            session.commit();
+            session.close();*/
 
-            BufferedReader stdError = new BufferedReader(new
-                    InputStreamReader(p.getErrorStream()));
+            String[] args = new String[] {"osm2pgsql", "--create", "--database map-db", fileName};
+            Process proc = new ProcessBuilder(args).directory(dir).start();
 
-            // read the output from the command
-            System.out.println("Here is the standard output of the command:\n");
-            while ((s = stdInput.readLine()) != null) {
-                System.out.println(s);
-            }
-
-            // read any errors from the attempted command
-            System.out.println("Here is the standard error of the command (if any):\n");
-            while ((s = stdError.readLine()) != null) {
-                System.out.println(s);
-            }
-
+            proc.destroy();
         } catch (IOException e) {
             System.out.println("exception happened - here's what I know: ");
             e.printStackTrace();
@@ -92,21 +91,24 @@ public class FileToDB {
 
     }
 
-    public Map<String, Map<String, String>> saveAndCallForCoordinates() {
+    private SqlSession getDBSession() throws IOException {
+        String resource = "mybatis/config.xml";
+        InputStream inputStream = Resources.getResourceAsStream(resource);
+        SqlSessionFactory sqlSessionFactory = new
+                SqlSessionFactoryBuilder().build(inputStream);
+
+        return sqlSessionFactory.openSession();
+    }
+
+    public Map<String, Map<String, String>> saveAndCallForPlaceCoordinates() {
 
         Map<String, Map<String, String>> nameMap = new HashMap<>();
 
-
         try  {
 
-            saveToDB("mapp.osm");
+            osmFileToDB("mapp.osm");
 
-            String resource = "mybatis/config.xml";
-            InputStream inputStream = Resources.getResourceAsStream(resource);
-            SqlSessionFactory sqlSessionFactory = new
-                    SqlSessionFactoryBuilder().build(inputStream);
-
-            SqlSession session = sqlSessionFactory.openSession();
+            SqlSession session = getDBSession();
             List<PlaceDBModel> list = session.selectList("selectPlaces");
 
             for (PlaceDBModel a : list) {
@@ -114,12 +116,13 @@ public class FileToDB {
 
                 System.out.println("Id: " + a.getOsm_id() + " Name: " + a.getName());
 
-                temporaryNameMap.putAll(makeCallForCoordinates(a));
+                temporaryNameMap.putAll(makeApiCallForPlaceToCompare(a));
                 temporaryNameMap.putAll(nameMap);
 
                 nameMap = temporaryNameMap;
 
             }
+            session.close();
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -130,7 +133,13 @@ public class FileToDB {
 
     }
 
-    private String getTypeFromDBObject(PlaceDBModel dbModel) {
+    /**
+     * place type could be either amenity or shop attribute if amenity is not null it has priority
+     *
+     * @param dbModel
+     * @return
+     */
+    private String getPlaceTypeFromDBObject(PlaceDBModel dbModel) {
         if (dbModel.getAmenity() != null) {
             return dbModel.getAmenity();
         }
@@ -138,117 +147,133 @@ public class FileToDB {
         return dbModel.getShop();
     }
 
-    private Map<String, Map<String, String>> makeCallForCoordinates(PlaceDBModel node) {
+    private Map<String, String> makeOpenStreetApiCallWithOSMID(PlaceDBModel node) throws IOException, SAXException,
+            ParserConfigurationException {
 
-        Map<String, Map<String, String>> nameMap = new HashMap<>();
+        Map<String, String> longAndLatMap = new HashMap<>();
 
         String openStreetUriGet = OPENSTREET_URI_GET_LONG_WITH_OSM_ID.replace("@OSM_ID", node.getOsm_id());
 
-        RestTemplate restTemplate = new RestTemplate();
         String result = restTemplate.getForObject(openStreetUriGet, String.class);
 
-        File tmpFile = null;
+        File tmpFile = File.createTempFile("test", ".xml");
+        FileWriter writer = new FileWriter(tmpFile);
+        writer.write(result);
+        writer.close();
+
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder;
+
+        dBuilder = dbFactory.newDocumentBuilder();
+        Document doc = dBuilder.parse(tmpFile);
+        doc.getDocumentElement().normalize();
+        System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+        NodeList nodeList = doc.getElementsByTagName("node");
+        //now XML is loaded as Document in memory, lets convert it to Object List
+        NamedNodeMap map = nodeList.item(0).getAttributes();
+        String LAT = map.getNamedItem("lat").getNodeValue();
+        String LOG = map.getNamedItem("lon").getNodeValue();
+
+        longAndLatMap.put("lat", LAT);
+        longAndLatMap.put("log", LOG);
+
+
+        return longAndLatMap;
+
+    }
+
+    private GoogleResult makeGooglePlaceApiCall(String lat, String log, String type) throws IOException {
+
+        String googleUriSearch = GOOGLE_URI_SEARCH_WITH_LONG.replace("@LAT", lat);
+        googleUriSearch = googleUriSearch.replace("@LONG", log);
+        googleUriSearch = googleUriSearch.replace("@RADIUS", String.valueOf(RADIUS));
+
+
+        googleUriSearch = googleUriSearch.replace("@TYPE", type);
+        googleUriSearch = googleUriSearch.replace("@KEY", GOOGLE_KEY);
+
+
+        String googleResultStr = restTemplate.getForObject(
+                googleUriSearch, String.class);
+
+        System.out.println(googleResultStr);
+
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(googleResultStr, GoogleResult.class);
+    }
+
+    private String makeGooglePlaceDetailCallWithPlaceID(String placeId) throws ParseException {
+        String googleRetrieveWithPlace = GOOGLE_RETRIEVE_WITH_PLACE_ID.replace("@PLACE_ID", placeId);
+
+        googleRetrieveWithPlace = googleRetrieveWithPlace.replace("@KEY", GOOGLE_KEY);
+
+
+        String googlePlaceDetailStr = restTemplate.getForObject(
+                googleRetrieveWithPlace, String.class);
+
+
+        org.json.simple.JSONObject obj;
+
+        JSONParser parser = new JSONParser();
+        obj = (org.json.simple.JSONObject) parser.parse(googlePlaceDetailStr);
+
+        org.json.simple.JSONObject resultObject = (JSONObject) obj.get("result");
+
+        return (String) resultObject.get("name");
+    }
+
+    private Map<String, Map<String, String>> makeApiCallForPlaceToCompare(PlaceDBModel node) {
+
+        Map<String, Map<String, String>> nameMap = new HashMap<>();
+
+        PlaceTypeMapper typeMapper = new PlaceTypeMapper();
+        String TYPE = typeMapper.getOpenToGoogle().get(getPlaceTypeFromDBObject(node));
 
         try {
-            tmpFile = File.createTempFile("test", ".xml");
-            FileWriter writer = new FileWriter(tmpFile);
-            writer.write(result);
-            writer.close();
 
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder;
-            try {
-                dBuilder = dbFactory.newDocumentBuilder();
-                Document doc = dBuilder.parse(tmpFile);
-                doc.getDocumentElement().normalize();
-                System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
-                NodeList nodeList = doc.getElementsByTagName("node");
-                //now XML is loaded as Document in memory, lets convert it to Object List
-                for (int i = 0; i < nodeList.getLength(); i++) {
-                    NamedNodeMap map = nodeList.item(i).getAttributes();
-                    String LAT = map.getNamedItem("lat").getNodeValue();
-                    String LOG = map.getNamedItem("lon").getNodeValue();
+            Map<String, String> latitudeAndLongitudeMap = makeOpenStreetApiCallWithOSMID(node);
 
-                    String googleUriSearch = GOOGLE_URI_SEARCH_WITH_LONG.replace("@LAT", LAT);
-                    googleUriSearch = googleUriSearch.replace("@LONG", LOG);
-                    googleUriSearch = googleUriSearch.replace("@RADIUS", String.valueOf(RADIUS));
+            GoogleResult googleResult = makeGooglePlaceApiCall(latitudeAndLongitudeMap.get("lat"), latitudeAndLongitudeMap
+                            .get("log"), TYPE);
 
-                    PlaceTypeMapper typeMapper = new PlaceTypeMapper();
-                    String TYPE = typeMapper.getOpenToGoogle().get(getTypeFromDBObject(node));
+            String nameResultFromGooglePlace = "NULL";
 
-                    googleUriSearch = googleUriSearch.replace("@TYPE", TYPE);
-                    googleUriSearch = googleUriSearch.replace("@KEY", GOOGLE_KEY);
+            if (!googleResult.getResults().isEmpty()) {
+                String PLACE_ID = googleResult.getResults().get(0).getPlace_id();
+                System.out.println(PLACE_ID);
 
+                nameResultFromGooglePlace = makeGooglePlaceDetailCallWithPlaceID(PLACE_ID);
 
-                    String googleResultStr = restTemplate.getForObject(
-                            googleUriSearch, String.class);
+            }
 
-                    System.out.println(googleResultStr);
+            System.out.println();
 
-                    ObjectMapper mapper = new ObjectMapper();
-                    GoogleResult googleResult = mapper.readValue(googleResultStr, GoogleResult.class);
+            System.out.println("*******COMPARE************");
+            System.out.println("openst -> " + node.getName());
+            System.out.println("googleMap -> " + nameResultFromGooglePlace);
+            //System.out.println("compare -> " + nameResultFromGooglePlace.equals(node.getName()));
+            System.out.println("*********FINISH**************");
+            System.out.println();
 
-                    if (googleResult.getResults().isEmpty()) {
-                        // no place add error to place
-                        continue;
-                    }
+            if (!nameResultFromGooglePlace.equals(node.getName())) {
+                String lngLat = latitudeAndLongitudeMap.get("lat") + "," + latitudeAndLongitudeMap.get("log");
 
-                    String PLACE_ID = googleResult.getResults().get(0).getPlace_id();
-                    System.out.println(PLACE_ID); //John
-
-
-                    String googleRetrieveWithPlace = GOOGLE_RETRIEVE_WITH_PLACE_ID.replace("@PLACE_ID", PLACE_ID);
-
-                    googleRetrieveWithPlace = googleRetrieveWithPlace.replace("@KEY", GOOGLE_KEY);
-
-
-                    String googlePlaceDetailStr = restTemplate.getForObject(
-                            googleRetrieveWithPlace, String.class);
-
-
-                    org.json.simple.JSONObject obj;
-                    try {
-
-                        JSONParser parser = new JSONParser();
-                        obj = (org.json.simple.JSONObject) parser.parse(googlePlaceDetailStr);
-
-                        org.json.simple.JSONObject resultObject = (JSONObject) obj.get("result");
-
-                        String nameResultFromGooglePlace = null;
-                        nameResultFromGooglePlace = (String) resultObject.get("name");
-                        System.out.println();
-
-                        System.out.println("*******COMPARE************");
-                        System.out.println("openst -> " + node.getName());
-                        System.out.println("googleMap -> " + nameResultFromGooglePlace);
-                        System.out.println("compare -> " + nameResultFromGooglePlace.equals(node.getName()));
-                        System.out.println("*********FINISH**************");
-                        System.out.println();
-
-                        if (!nameResultFromGooglePlace.equals(node.getName())) {
-                            String lngLat = LAT + "," + LOG;
-
-                            Map<String, String> mapOfNames = new HashMap<>();
-                            mapOfNames.put("openstreet", node.getName());
-                            mapOfNames.put("google", nameResultFromGooglePlace);
-                            nameMap.put(lngLat, mapOfNames);
-                        }
-
-
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-
-            } catch (SAXException | ParserConfigurationException | IOException e1) {
-                e1.printStackTrace();
+                Map<String, String> mapOfNames = new HashMap<>();
+                mapOfNames.put("openstreet", node.getName());
+                mapOfNames.put("google", nameResultFromGooglePlace);
+                nameMap.put(lngLat, mapOfNames);
             }
 
             System.out.println();
 
 
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
             e.printStackTrace();
         }
 

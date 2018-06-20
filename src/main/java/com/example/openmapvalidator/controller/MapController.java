@@ -24,7 +24,7 @@ public class MapController {
             "false")
     @GetMapping
     Map<String, Map<String, String>> readMap() {
-        return fileToDBService.saveAndCallForCoordinates();
+        return fileToDBService.saveAndCallForPlaceCoordinates();
     }
 
 }

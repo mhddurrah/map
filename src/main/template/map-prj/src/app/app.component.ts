@@ -12,8 +12,6 @@ export class AppComponent implements OnInit {
   title = 'app works!';
   data: any = {};
 
-  coordinateData: String[] = [];
-
   constructor(private demoService: DemoService) {
   }
 
@@ -28,7 +26,7 @@ export class AppComponent implements OnInit {
     });
 
 
-    if (this.coordinateData.length === 0) {
+    if (this.isEmpty(this.data)) {
       this.getData();
     }
 
@@ -75,6 +73,11 @@ export class AppComponent implements OnInit {
     }
 
 
+  }
+
+  isEmpty(ob){
+    for(var i in ob){ return false;}
+    return true;
   }
 
   getData() {
