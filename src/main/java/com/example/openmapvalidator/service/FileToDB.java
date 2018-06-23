@@ -24,13 +24,11 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 @Service
 public class FileToDB {
@@ -63,33 +61,51 @@ public class FileToDB {
 
         try {
 
-            // run the Unix "ps -ef" command
-            // using the Runtime exec method:
-            // create a file with the working directory we wish
-            File dir = new ClassPathResource("map").getFile();
+            ProcessBuilder builder = new ProcessBuilder();
+            if (isWindows) {
+                builder.command("cmd.exe", "/c", "dir");
+            } else {
+                builder.command("osm2pgsql", "--create", "--database", "map-db", fileName);
+            }
 
-           // String command = "osm2pgsql --create --database map-db @FILE_NAME";
-          //  command = command.replace("@FILE_NAME", fileName);
+            builder.directory(new ClassPathResource("map").getFile());
+            Process process = builder.start();
+            StreamGobbler streamGobbler =
+                    new StreamGobbler(process.getInputStream(), System.out::println);
+            Executors.newSingleThreadExecutor().submit(streamGobbler);
+            int exitCode = process.waitFor();
+            assert exitCode == 0;
 
-         //   Process p = Runtime.getRuntime().exec(command, null, dir);
-
-            /*SqlSession session = getDBSession();
-            session.delete("deleteOsmPoint");
-            session.commit();
-            session.close();*/
-
-            String[] args = new String[] {"osm2pgsql", "--create", "--database map-db", fileName};
-            Process proc = new ProcessBuilder(args).directory(dir).start();
-
-            proc.destroy();
+            //p.destroy();
         } catch (IOException e) {
             System.out.println("exception happened - here's what I know: ");
             e.printStackTrace();
             System.exit(-1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
 
     }
+
+    private static String output(InputStream inputStream) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new InputStreamReader(inputStream));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                sb.append(line + System.getProperty("line.separator"));
+            }
+        } finally {
+            br.close();
+
+        }
+        return sb.toString();
+
+    }
+
+
 
     private SqlSession getDBSession() throws IOException {
         String resource = "mybatis/config.xml";
@@ -106,7 +122,7 @@ public class FileToDB {
 
         try  {
 
-            osmFileToDB("mapp.osm");
+            osmFileToDB("map.osm");
 
             SqlSession session = getDBSession();
             List<PlaceDBModel> list = session.selectList("selectPlaces");
@@ -116,7 +132,7 @@ public class FileToDB {
 
                 System.out.println("Id: " + a.getOsm_id() + " Name: " + a.getName());
 
-                temporaryNameMap.putAll(makeApiCallForPlaceToCompare(a));
+                //temporaryNameMap.putAll(makeApiCallForPlaceToCompare(a));
                 temporaryNameMap.putAll(nameMap);
 
                 nameMap = temporaryNameMap;
