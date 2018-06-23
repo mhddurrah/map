@@ -144,6 +144,9 @@ public class FileToDB {
                 nameMap = temporaryNameMap;
 
             }
+
+            logger.debug("");
+
             session.close();
         }
         catch (Exception e) {

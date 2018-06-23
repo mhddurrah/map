@@ -1,0 +1,1 @@
+lsof -ti:8080 | xargs kill & lsof -ti:4200 | xargs kill
