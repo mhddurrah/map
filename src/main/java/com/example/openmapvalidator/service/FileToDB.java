@@ -11,6 +11,8 @@ import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -32,6 +34,8 @@ import java.util.concurrent.Executors;
 
 @Service
 public class FileToDB {
+
+    private static final Logger logger = LoggerFactory.getLogger(FileToDB.class);
 
     @Value( "${googlemap.radius}" )
     private int RADIUS;
@@ -78,7 +82,7 @@ public class FileToDB {
 
             //p.destroy();
         } catch (IOException e) {
-            System.out.println("exception happened - here's what I know: ");
+            logger.debug("osm command execute exception happened - here's what I know: ");
             e.printStackTrace();
             System.exit(-1);
         } catch (InterruptedException e) {
@@ -120,6 +124,8 @@ public class FileToDB {
 
         Map<String, Map<String, String>> nameMap = new HashMap<>();
 
+        logger.debug("place data, openstreet from db");
+
         try  {
 
             osmFileToDB("map.osm");
@@ -130,7 +136,7 @@ public class FileToDB {
             for (PlaceDBModel a : list) {
                 Map<String, Map<String, String>> temporaryNameMap = new HashMap<>();
 
-                System.out.println("Id: " + a.getOsm_id() + " Name: " + a.getName());
+                logger.debug("Id: " + a.getOsm_id() + " Name: " + a.getName());
 
                 //temporaryNameMap.putAll(makeApiCallForPlaceToCompare(a));
                 temporaryNameMap.putAll(nameMap);
@@ -183,7 +189,7 @@ public class FileToDB {
         dBuilder = dbFactory.newDocumentBuilder();
         Document doc = dBuilder.parse(tmpFile);
         doc.getDocumentElement().normalize();
-        System.out.println("Root element :" + doc.getDocumentElement().getNodeName());
+        logger.debug("Root element :" + doc.getDocumentElement().getNodeName());
         NodeList nodeList = doc.getElementsByTagName("node");
         //now XML is loaded as Document in memory, lets convert it to Object List
         NamedNodeMap map = nodeList.item(0).getAttributes();
@@ -212,7 +218,7 @@ public class FileToDB {
         String googleResultStr = restTemplate.getForObject(
                 googleUriSearch, String.class);
 
-        System.out.println(googleResultStr);
+        logger.debug(googleResultStr);
 
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(googleResultStr, GoogleResult.class);
@@ -256,20 +262,17 @@ public class FileToDB {
 
             if (!googleResult.getResults().isEmpty()) {
                 String PLACE_ID = googleResult.getResults().get(0).getPlace_id();
-                System.out.println(PLACE_ID);
+                logger.debug(PLACE_ID);
 
                 nameResultFromGooglePlace = makeGooglePlaceDetailCallWithPlaceID(PLACE_ID);
 
             }
 
-            System.out.println();
-
-            System.out.println("*******COMPARE************");
-            System.out.println("openst -> " + node.getName());
-            System.out.println("googleMap -> " + nameResultFromGooglePlace);
-            //System.out.println("compare -> " + nameResultFromGooglePlace.equals(node.getName()));
-            System.out.println("*********FINISH**************");
-            System.out.println();
+            logger.debug("\n" + "*******COMPARE************");
+            logger.debug("openst -> " + node.getName());
+            logger.debug("googleMap -> " + nameResultFromGooglePlace);
+            //logger.debug("compare -> " + nameResultFromGooglePlace.equals(node.getName()));
+            logger.debug("*********FINISH**************" + "\n");
 
             if (!nameResultFromGooglePlace.equals(node.getName())) {
                 String lngLat = latitudeAndLongitudeMap.get("lat") + "," + latitudeAndLongitudeMap.get("log");
@@ -279,9 +282,6 @@ public class FileToDB {
                 mapOfNames.put("google", nameResultFromGooglePlace);
                 nameMap.put(lngLat, mapOfNames);
             }
-
-            System.out.println();
-
 
         } catch (IOException e) {
             e.printStackTrace();
