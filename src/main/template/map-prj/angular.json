@@ -50,6 +50,7 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
+            "port": 4210,
             "browserTarget": "map-prj:build"
           },
           "configurations": {

@@ -20,11 +20,8 @@ public class MapController {
         this.fileToDBService = fileToDBService;
     }
 
-    @CrossOrigin(origins = {"http://localhost:4201", "http://localhost:4200"}, maxAge = 4800, allowCredentials =
-            "false")
     @GetMapping
     Map<String, Map<String, String>> readMap() {
         return fileToDBService.saveAndCallForPlaceCoordinates();
     }
-
 }

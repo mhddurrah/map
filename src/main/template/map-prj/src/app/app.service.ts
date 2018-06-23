@@ -7,7 +7,7 @@ import 'rxjs/add/operator/catch';
 @Injectable()
 export class DemoService {
 
-  private articleUrl = "http://localhost:8080/maps";
+  private articleUrl = "http://localhost:8090/maps";
 
   constructor(private http: Http) {
   }
