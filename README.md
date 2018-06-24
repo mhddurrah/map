@@ -1,9 +1,11 @@
 # map
 san-map
 --prerequisites
+* postgresql service should be active
 * npm command should be defined as environment variable
 * ng command also should be installed as global from npm
 * osm2plsql command should be defined as env. var.
+
 
 - if you are using linux machine or unix based system just run runscript.sh file
 - command -> "sh runscript.sh"

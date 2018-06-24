@@ -61,13 +61,15 @@ public class FileToDB {
         boolean isWindows = System.getProperty("os.name")
                 .toLowerCase().startsWith("windows");
 
-        String s = null;
-
         try {
 
             ProcessBuilder builder = new ProcessBuilder();
             if (isWindows) {
-                builder.command("cmd.exe", "/c", "dir");
+                //builder.command("osm2pgsql -c -d map-db -U postgres -S " +
+                      //  "C:\\Users\\Yusuf\\Desktop\\Sanan\\Projects\\osm2pgsql-bin\\default.style @FILE_NAME");
+                builder.command("osm2pgsql", "-c", "-d", "map-db", "-S",
+                        "default.style",
+                        fileName);
             } else {
                 builder.command("osm2pgsql", "--create", "--database", "map-db", fileName);
             }
@@ -133,12 +135,12 @@ public class FileToDB {
             SqlSession session = getDBSession();
             List<PlaceDBModel> list = session.selectList("selectPlaces");
 
-            for (PlaceDBModel a : list) {
+            for (PlaceDBModel model : list) {
                 Map<String, Map<String, String>> temporaryNameMap = new HashMap<>();
 
-                logger.debug("Id: " + a.getOsm_id() + " Name: " + a.getName());
+                logger.debug("Id: " + model.getOsm_id() + " Name: " + model.getName());
 
-                //temporaryNameMap.putAll(makeApiCallForPlaceToCompare(a));
+                temporaryNameMap.putAll(makeApiCallForPlaceToCompare(model));
                 temporaryNameMap.putAll(nameMap);
 
                 nameMap = temporaryNameMap;
@@ -172,6 +174,15 @@ public class FileToDB {
         return dbModel.getShop();
     }
 
+    /**
+     * Get latitude and longitude of a place which is stored in db retrieve with osm_id
+     *
+     * @param node
+     * @return
+     * @throws IOException
+     * @throws SAXException
+     * @throws ParserConfigurationException
+     */
     private Map<String, String> makeOpenStreetApiCallWithOSMID(PlaceDBModel node) throws IOException, SAXException,
             ParserConfigurationException {
 
@@ -207,6 +218,16 @@ public class FileToDB {
 
     }
 
+    /**
+     *
+     * get google places result with latitude and longitude type of a place is mapped from openstreet
+     *
+     * @param lat
+     * @param log
+     * @param type
+     * @return
+     * @throws IOException
+     */
     private GoogleResult makeGooglePlaceApiCall(String lat, String log, String type) throws IOException {
 
         String googleUriSearch = GOOGLE_URI_SEARCH_WITH_LONG.replace("@LAT", lat);
@@ -227,6 +248,14 @@ public class FileToDB {
         return mapper.readValue(googleResultStr, GoogleResult.class);
     }
 
+    /**
+     *
+     * Retrieve google place with placeid in order to take name of a place
+     *
+     * @param placeId
+     * @return
+     * @throws ParseException
+     */
     private String makeGooglePlaceDetailCallWithPlaceID(String placeId) throws ParseException {
         String googleRetrieveWithPlace = GOOGLE_RETRIEVE_WITH_PLACE_ID.replace("@PLACE_ID", placeId);
 
@@ -247,6 +276,13 @@ public class FileToDB {
         return (String) resultObject.get("name");
     }
 
+    /**
+     *
+     * get result from google and compare with node
+     *
+     * @param node
+     * @return
+     */
     private Map<String, Map<String, String>> makeApiCallForPlaceToCompare(PlaceDBModel node) {
 
         Map<String, Map<String, String>> nameMap = new HashMap<>();

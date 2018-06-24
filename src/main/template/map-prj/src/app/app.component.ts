@@ -9,7 +9,7 @@ import { } from '@types/googlemaps';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  title = 'app works!';
+  title = 'OpenStreetMap Validator';
   data: any = {};
 
   constructor(private demoService: DemoService) {
