@@ -105,7 +105,7 @@ public class FileToDB {
 
         try  {
 
-            osmFileToDB("map.osm");
+            osmFileToDB("mapp.osm");
 
             SqlSession session = getDBSession();
             List<PlaceDBModel> list = session.selectList("selectPlaces");
