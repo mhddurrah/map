@@ -4,6 +4,7 @@ san-map
 * postgresql service should be active
 * npm command should be defined as environment variable
 * ng command also should be installed as global from npm
+npm install -g @angular/cli
 * osm2plsql command should be defined as env. var.
 
 
