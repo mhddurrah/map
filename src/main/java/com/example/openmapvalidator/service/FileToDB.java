@@ -283,7 +283,7 @@ public class FileToDB {
         try {
 
             Map<String, String> latitudeAndLongitudeMap = makeOpenStreetApiCallWithOSMID(node);
-            logger.debug("{}, {}", latitudeAndLongitudeMap.get("lat"), latitudeAndLongitudeMap.get("log"));
+            logger.debug("{}, {}", latitudeAndLongitudeMap.get("lat"), latitudeAndLongitudeMap.get("lon"));
 
             String lat = latitudeAndLongitudeMap.get("lat");
             String lon = latitudeAndLongitudeMap.get("lon");
@@ -316,7 +316,7 @@ public class FileToDB {
             logger.debug("*********FINISH**************" + "\n");
 
             if (!nameResultFromGooglePlace.equals(node.getName())) {
-                String lngLat = latitudeAndLongitudeMap.get("lat") + "," + latitudeAndLongitudeMap.get("log");
+                String lngLat = latitudeAndLongitudeMap.get("lat") + "," + latitudeAndLongitudeMap.get("lon");
 
                 Map<String, String> mapOfNames = new HashMap<>();
                 mapOfNames.put("openstreet", node.getName());

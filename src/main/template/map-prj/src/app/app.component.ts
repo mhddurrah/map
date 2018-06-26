@@ -18,10 +18,10 @@ export class AppComponent implements OnInit {
   ngOnInit() {
 
     let map;
-    const DALLAS = {lat: 48.20368, lng: 16.31764};
+    const FOCUS = {lat: 48.20368, lng: 16.31764};
 
     map = new google.maps.Map(document.getElementById('map'), {
-      center: DALLAS,
+      center: FOCUS,
       zoom: 15
     });
 
@@ -51,6 +51,7 @@ export class AppComponent implements OnInit {
 
       let googleName = value["google"];
       let openName = value["openstreet"];
+      let foursqName = value["foursquare"];
 
       let splitCoordinate = coordinate.split(',');
 
@@ -63,7 +64,8 @@ export class AppComponent implements OnInit {
 
       google.maps.event.addListener(marker, 'click', (function(marker, i) {
         return function() {
-          infowindow.setContent('location' + i + " - " + "<br />" + "google: " + googleName + "<br />" + "open: " +openName);
+          infowindow.setContent('location' + i + " - " + "<br />" + "google: " + googleName +
+            "<br />" + "open: " +openName + "<br />" + "foursquare: " + foursqName);
           infowindow.open(map, marker);
         }
       })(marker, i));
