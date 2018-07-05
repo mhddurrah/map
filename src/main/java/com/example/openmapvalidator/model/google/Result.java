@@ -1,10 +1,109 @@
 package com.example.openmapvalidator.model.google;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.List;
+
 public class Result {
     private String place_id;
+    @JsonIgnore
     private Geometry geometry;
     private String id;
     private String reference;
+    private String icon;
+    private String name;
+    @JsonIgnore
+    private OpeningHours opening_hours;
+    @JsonIgnore
+    private List<Photo> photos;
+    @JsonIgnore
+    private PlusCode plus_code;
+    private String rating;
+    private String scope;
+    private String price_level;
+    @JsonIgnore
+    private List<Type> types;
+    private String vicinity;
+
+    public String getPrice_level() {
+        return price_level;
+    }
+
+    public void setPrice_level(String price_level) {
+        this.price_level = price_level;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public OpeningHours getOpening_hours() {
+        return opening_hours;
+    }
+
+    public void setOpening_hours(OpeningHours opening_hours) {
+        this.opening_hours = opening_hours;
+    }
+
+    public List<Photo> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<Photo> photos) {
+        this.photos = photos;
+    }
+
+    public PlusCode getPlus_code() {
+        return plus_code;
+    }
+
+    public void setPlus_code(PlusCode plus_code) {
+        this.plus_code = plus_code;
+    }
+
+    public String getRating() {
+        return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
+    }
+
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    public List<Type> getTypes() {
+        return types;
+    }
+
+    public void setTypes(List<Type> types) {
+        this.types = types;
+    }
+
+    public String getVicinity() {
+        return vicinity;
+    }
+
+    public void setVicinity(String vicinity) {
+        this.vicinity = vicinity;
+    }
 
     public String getPlace_id() {
         return place_id;
@@ -39,35 +138,17 @@ public class Result {
     }
 
     private static class Geometry {
-        private Location location;
-
-        public Location getLocation() {
-            return location;
-        }
-
-        public void setLocation(Location location) {
-            this.location = location;
-        }
     }
 
-    private static class Location {
-        private String lat;
-        private String lng;
+    private static class OpeningHours {
+    }
 
-        public String getLat() {
-            return lat;
-        }
+    private static class Photo {
+    }
 
-        public void setLat(String lat) {
-            this.lat = lat;
-        }
+    private static class PlusCode {
+    }
 
-        public String getLng() {
-            return lng;
-        }
-
-        public void setLng(String lng) {
-            this.lng = lng;
-        }
+    private static class Type {
     }
 }

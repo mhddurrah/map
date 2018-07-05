@@ -9,6 +9,8 @@ public class Venue {
     private String name;
 
     @JsonIgnore
+    private VenuePage venuePage;
+    @JsonIgnore
     private Location location;
     @JsonIgnore
     private List<Category> categories;
@@ -16,6 +18,34 @@ public class Venue {
     private String referralId;
     @JsonIgnore
     private boolean hasPerk;
+    @JsonIgnore
+    private Delivery delivery;
+    @JsonIgnore
+    private Events events;
+
+    public Events getEvents() {
+        return events;
+    }
+
+    public void setEvents(Events events) {
+        this.events = events;
+    }
+
+    public VenuePage getVenuePage() {
+        return venuePage;
+    }
+
+    public void setVenuePage(VenuePage venuePage) {
+        this.venuePage = venuePage;
+    }
+
+    public Delivery getDelivery() {
+        return delivery;
+    }
+
+    public void setDelivery(Delivery delivery) {
+        this.delivery = delivery;
+    }
 
     public String getId() {
         return id;
@@ -69,5 +99,14 @@ public class Venue {
     }
 
     private static class Category {
+    }
+
+    private static class VenuePage {
+    }
+
+    private static class Delivery {
+    }
+
+    private static class Events {
     }
 }

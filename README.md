@@ -5,8 +5,10 @@ san-map
 * npm command should be defined as environment variable
 * ng command also should be installed as global from npm
 npm install -g @angular/cli
-* osm2plsql command should be defined as env. var.
-
+* osm2plsql is already inside of project but for windows
+ - http://download.osgeo.org/postgis/windows/pg10/ postgis should be installed
+    and "CREATE EXTENSION postgis; CREATE EXTENSION hstore;" those extensions should be
+    run inside of "map-db" database.
 
 - if you are using linux machine or unix based system just run runscript.sh file
 - command -> "sh runscript.sh"

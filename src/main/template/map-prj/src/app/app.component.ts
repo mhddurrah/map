@@ -12,67 +12,97 @@ export class AppComponent implements OnInit {
   title = 'OpenStreetMap Validator';
   data: any = {};
 
+  fileToUpload: File = null;
+  isFileUploaded: boolean = false;
+
   constructor(private demoService: DemoService) {
   }
 
   ngOnInit() {
 
     let map;
-    const FOCUS = {lat: 48.20368, lng: 16.31764};
 
-    map = new google.maps.Map(document.getElementById('map'), {
-      center: FOCUS,
-      zoom: 15
-    });
+    if (this.data !== undefined) {
+      if (this.data.body !== undefined) {
+
+        this.data = JSON.parse(this.data.body)
+
+        let keys = Object.keys(this.data);
+
+        let splitCoordinateFocus = keys[0].split(',');
+
+        const FOCUS = {lat: Number(splitCoordinateFocus[0]), lng: Number(splitCoordinateFocus[1])};
+        debugger
+
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: FOCUS,
+          zoom: 15
+        });
+
+        var infowindow = new google.maps.InfoWindow();
+
+        var marker;
+        var i = 0;
 
 
-    if (this.isEmpty(this.data)) {
-      this.getData();
-    }
 
-    //google.maps.event.addListener(marker, 'hover', ( () => this.title = "i was a map click") );
+        for (let coordinate of keys) {
+          //coordinate = 123.3 80.3
+          let value = this.data[coordinate]
+          //value = google : name
+          // open : name
 
-    //marker.setMap(this.map);
-    //let constMap = this.map;
+          let googleName = value["google"];
+          let openName = value["openstreet"];
+          let foursqName = value["foursquare"];
+          let microsoftName = value["microsoft"];
 
-    var infowindow = new google.maps.InfoWindow();
+          let splitCoordinate = coordinate.split(',');
 
-    var marker;
-    var i = 0;
+          marker = new google.maps.Marker({
+            position: new google.maps.LatLng(Number(splitCoordinate[0]), Number(splitCoordinate[1])),
+            map: map
+          });
 
+          marker.setMap(map);
 
-    let keys = Object.keys(this.data);
+          google.maps.event.addListener(marker, 'click', (function(marker, i) {
+            return function() {
+              infowindow.setContent('location' + i + " - " + "<br />" + "google: " + googleName +
+                "<br />" + "open: " +openName + "<br />" + "foursquare: " + foursqName
+                + "<br />" + "microsoft: " + microsoftName );
+              infowindow.open(map, marker);
+            }
+          })(marker, i));
 
-    for (let coordinate of keys) {
-      //coordinate = 123.3 80.3
-      let value = this.data[coordinate]
-      //value = google : name
-              // open : name
+          i++;
 
-      let googleName = value["google"];
-      let openName = value["openstreet"];
-      let foursqName = value["foursquare"];
-
-      let splitCoordinate = coordinate.split(',');
-
-      marker = new google.maps.Marker({
-        position: new google.maps.LatLng(Number(splitCoordinate[0]), Number(splitCoordinate[1])),
-        map: map
-      });
-
-      marker.setMap(map);
-
-      google.maps.event.addListener(marker, 'click', (function(marker, i) {
-        return function() {
-          infowindow.setContent('location' + i + " - " + "<br />" + "google: " + googleName +
-            "<br />" + "open: " +openName + "<br />" + "foursquare: " + foursqName);
-          infowindow.open(map, marker);
         }
-      })(marker, i));
-
-      i++;
-
+      }
     }
+
+  }
+
+  handleFileInput(files: FileList) {
+    console.info("in post and get");
+
+    this.fileToUpload = files.item(0);
+    this.isFileUploaded = true;
+    //TODO success de
+
+
+    this.demoService.upload(this.fileToUpload).subscribe(
+      // the first argument is a function which runs on success
+      data => { console.log('check THIS!!' + data); this.data = data
+      },
+      // the second argument is a function which runs on error
+      err => console.error(err),
+      // the third argument is a function which runs on completion
+      () => { console.log('done loading data'); this.ngOnInit(); }
+    );
+
+
+    console.info("out getdata");
 
 
   }

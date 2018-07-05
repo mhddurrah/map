@@ -9,6 +9,8 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+
 @SpringBootApplication
 public class OpenMapValidatorApplication {
 
@@ -33,5 +35,10 @@ public class OpenMapValidatorApplication {
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
+    }
+
+    @Bean
+    public DocumentBuilderFactory documentBuilderFactory() {
+       return DocumentBuilderFactory.newInstance();
     }
 }

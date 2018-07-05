@@ -4,6 +4,14 @@
 
 <div>
 
-  <div id="map" class="google-map"></div>
+  <div [hidden]="isFileUploaded" class="form-group">
+    <label for="file">Choose File</label>
+    <input type="file"
+           id="file"
+           (change)="handleFileInput($event.target.files)">
+  </div>
+
+  <div [hidden]="!isFileUploaded"
+       id="map" class="google-map"></div>
 
 </div>

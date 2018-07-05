@@ -1,5 +1,7 @@
 package com.example.openmapvalidator.model.google;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.List;
 
 public class GoogleResult {
@@ -7,6 +9,16 @@ public class GoogleResult {
     private List<Result> results;
     private List<String> html_attributions;
     private String status;
+    @JsonIgnore
+    private String next_page_token;
+
+    public String getNext_page_token() {
+        return next_page_token;
+    }
+
+    public void setNext_page_token(String next_page_token) {
+        this.next_page_token = next_page_token;
+    }
 
     public String getError_message() {
         return error_message;
