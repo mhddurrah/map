@@ -119,7 +119,7 @@ public class FileToDB {
             SqlSession session = getDBSession();
             List<PlaceDBModel> list = session.selectList("selectPlaces");
 
-            ExecutorService executorService = Executors.newFixedThreadPool(list.size());
+            ExecutorService executorService = Executors.newFixedThreadPool(5);
 
 
             for (PlaceDBModel model : list) {
@@ -127,19 +127,23 @@ public class FileToDB {
 
                 logger.debug("Id: " + model.getOsm_id() + " Name: " + model.getName());
 
-                /*try {
-                    PlaceDBModel model1 = executorService.submit(model).get();
+                try {
+                    executorService.submit(new Runnable(){
+                        public void run(){
+                            makeApiCallForPlaceToCompare(model);
+
+                            temporaryNameMap.putAll(makeApiCallForPlaceToCompare(model));
+                            temporaryNameMap.putAll(nameMap);
+
+                            nameMap = temporaryNameMap;
+                        }
+                    });
                     System.out.println(App.truckList[i]);
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace(System.err);
                 }
 
-                makeApiCallForPlaceToCompare(model);*/
-
-                temporaryNameMap.putAll(makeApiCallForPlaceToCompare(model));
-                temporaryNameMap.putAll(nameMap);
-
-                nameMap = temporaryNameMap;
+                
 
             }
 
