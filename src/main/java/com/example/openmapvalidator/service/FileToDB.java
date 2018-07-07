@@ -119,13 +119,20 @@ public class FileToDB {
             SqlSession session = getDBSession();
             List<PlaceDBModel> list = session.selectList("selectPlaces");
 
-            ExecutorService executorService = Executors.newFixedThreadPool(list.size());
+            ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 
             for (PlaceDBModel model : list) {
-                Map<String, Map<String, String>> temporaryNameMap = new HashMap<>();
+                Map<String, Map<String, String>> temporaryNameMap = new ConcurrentHashMap<>();
 
                 logger.debug("Id: " + model.getOsm_id() + " Name: " + model.getName());
+                
+                executorService.execute(() -> {
+                    temporaryNameMap.putAll(makeApiCallForPlaceToCompare(model));
+                    temporaryNameMap.putAll(nameMap);
+
+                    nameMap = temporaryNameMap;
+                });
 
                 /*try {
                     PlaceDBModel model1 = executorService.submit(model).get();
@@ -136,10 +143,7 @@ public class FileToDB {
 
                 makeApiCallForPlaceToCompare(model);*/
 
-                temporaryNameMap.putAll(makeApiCallForPlaceToCompare(model));
-                temporaryNameMap.putAll(nameMap);
-
-                nameMap = temporaryNameMap;
+                
 
             }
 
